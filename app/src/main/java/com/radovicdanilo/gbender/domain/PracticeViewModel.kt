@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.media.RingtoneManager
 import android.util.Log
 import com.lbbento.pitchuptuner.GuitarTuner
 import com.lbbento.pitchuptuner.GuitarTunerListener
@@ -18,82 +17,95 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 
 
-class PracticeViewModel(val levels: List<Level>, val tuning: Tuning) {
-
+class PracticeViewModel(val tuning: Tuning) {
+    var levels: ArrayList<Level> = arrayListOf(Level.HALF)
     var currentNote = MutableStateFlow(getRandomNote())
     var currentLevel = MutableStateFlow(getRandomLevel())
     val currentPitch = MutableStateFlow(440.0f)
     var circleColorOn = MutableStateFlow(arrayListOf(false, false, false, false, false))
 
     var progress: MutableStateFlow<Long> = MutableStateFlow(0)
-    var deltaTime: Long = 0
+    var previousTime: Long = 0
     var active = false
 
     @SuppressLint("MissingPermission")
     fun start() {
-        val audioRecorder =
-            PitchAudioRecorder(
-                AudioRecord(
-                    MediaRecorder.AudioSource.DEFAULT,
-                    44100,
-                    AudioFormat.CHANNEL_IN_DEFAULT,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    AudioRecord.getMinBufferSize(
-                        44100,
-                        AudioFormat.CHANNEL_IN_DEFAULT,
-                        AudioFormat.ENCODING_PCM_16BIT
-                    )
+        levels = arrayListOf()
+        Level.values().forEach { level ->
+            if (level.selected.value) {
+                levels.add(level)
+            }
+        }
+        val audioRecorder = PitchAudioRecorder(
+            AudioRecord(
+                MediaRecorder.AudioSource.DEFAULT,
+                44100,
+                AudioFormat.CHANNEL_IN_DEFAULT,
+                AudioFormat.ENCODING_PCM_16BIT,
+                AudioRecord.getMinBufferSize(
+                    44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT
                 )
             )
+        )
+
 
         val guitarTunerListener = object : GuitarTunerListener {
 
             override fun onNoteReceived(tunerResult: TunerResult) {
-                val now = System.currentTimeMillis();
-                currentPitch.value = (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
-                if(currentPitch.value.toInt() == 0)
+                val now = System.currentTimeMillis()
+//                if(previousTime != 0.toLong() && previousTime + 50 > now)
+//                    return
+
+                currentPitch.value =
+                    (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
+                if (currentPitch.value.toInt() < 20)
                     return
-                val difference = (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat() - getDesiredNoteFrequency()
+
                 circleColorOn.value = arrayListOf(false, false, false, false, false)
-                var activeTemp = false
-                if (difference < -50) {
-                    circleColorOn.value[0] = true
-                } else if (difference < -25) {
-                    circleColorOn.value[1] = true
-                } else if (difference > 50) {
-                    circleColorOn.value[4] = true
-                } else if (difference > 25) {
-                    circleColorOn.value[3] = true
-                } else {
-                    circleColorOn.value[2] = true
-                    activeTemp = true
-                }
-                active = activeTemp
-                if(active){
-                    if(deltaTime == 0.toLong()){
-                        deltaTime = now
+                active = false
+                when {
+                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.secondaryAccuracyCents)
+                    -> circleColorOn.value[0] = true
+
+                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.accuracyCents)
+                    -> circleColorOn.value[1] = true
+
+                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.secondaryAccuracyCents)
+                    -> circleColorOn.value[3] = true
+
+                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.accuracyCents)
+                    -> circleColorOn.value[4] = true
+
+                    else -> {
+                        circleColorOn.value[2] = true
+                        active = true
                     }
-                    progress.value = progress.value + now - deltaTime
-                    deltaTime = now
-                    if(progress.value > 2000){
-                        deltaTime = 0
-                        progress.value = 10
-                        next()
-                    }
-                }else{
-                    deltaTime = 0
-                    progress.value = 10
                 }
-                Log.d("PROG", progress.value.toString())
+                if (!active) {
+                    previousTime = 0
+                    progress.value = 0
+                    return
+                }
+                if (previousTime == 0.toLong()) {
+                    previousTime = now
+                }
+                progress.value = progress.value + now - previousTime
+                previousTime = now
+                if (progress.value > AppCore.instance.timeMilis) {
+                    previousTime = 0
+                    progress.value = 0
+                    next()
+                }
             }
 
-            override fun onError(e: Throwable) {
-                Log.d("ERROR", e.message.toString())
+            override fun onError(throwable: Throwable) {
+                Log.d("ERROR", throwable.message.toString())
             }
         }
 
         val guitarTuner = GuitarTuner(audioRecorder, guitarTunerListener)
         guitarTuner.start()
+        next()
     }
 
     fun next() {
@@ -113,13 +125,26 @@ class PracticeViewModel(val levels: List<Level>, val tuning: Tuning) {
     }
 
     fun getDesiredNoteFrequency(): Float {
-        var steps = currentNote.value.fret - 2
+        var steps: Float = (currentNote.value.fret - 2).toFloat()
+        if (currentNote.value.string == 1) {
+            steps += 9
+        }
+        if (currentNote.value.string == 2) {
+            steps += 4
+        }
+        return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
+    }
+
+    fun getDesiredNoteFrequencyWithOffset(offsetInCents: Int): Float {
+        var steps: Float = (currentNote.value.fret - 2).toFloat()
         if (currentNote.value.string == 1) {
             steps += 7
         }
         if (currentNote.value.string == 1) {
             steps += 2
         }
+        steps += currentLevel.value.frets()
+        steps += offsetInCents.toFloat() / 100
         return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
     }
 

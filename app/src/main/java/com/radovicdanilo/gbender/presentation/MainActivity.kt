@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.radovicdanilo.gbender.data.model.Level
 import com.radovicdanilo.gbender.data.model.Tuning
+import com.radovicdanilo.gbender.di.AppCore
 import com.radovicdanilo.gbender.domain.PracticeViewModel
 import com.radovicdanilo.gbender.presentation.main.MainScreen
 import com.radovicdanilo.gbender.presentation.practice.PracticeScreen
@@ -30,9 +31,9 @@ class MainActivity : ComponentActivity() {
                         MainScreen(navController)
                     }
                     composable(
-                        route = Screen.PracticeScreen.route
+                        route = Screen.PracticeScreen.route,
                     ) {
-                        PracticeScreen(PracticeViewModel(listOf(Level.HALF, Level.WHOLE), Tuning.E))
+                        PracticeScreen(AppCore.instance.practiceViewModel)
                     }
                 }
             }

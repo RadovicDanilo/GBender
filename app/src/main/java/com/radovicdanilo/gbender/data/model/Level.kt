@@ -1,8 +1,11 @@
 package com.radovicdanilo.gbender.data.model
 
+import kotlinx.coroutines.flow.MutableStateFlow
+
 enum class Level {
 
     HALF, WHOLE, WHOLE_AND_HALF, TWO_WHOLE, TWO_WHOLE_AND_HALF, THREE_WHOLE;
+    var selected = MutableStateFlow(false)
 
     override fun toString(): String {
         if (this == HALF) {

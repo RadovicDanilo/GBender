@@ -1,5 +1,7 @@
 package com.radovicdanilo.gbender.di
 
+import com.radovicdanilo.gbender.data.model.Tuning
+import com.radovicdanilo.gbender.domain.PracticeViewModel
 
 
 class AppCore private constructor() {
@@ -9,7 +11,11 @@ class AppCore private constructor() {
             AppCore()
         }
     }
-    var accuracy = 20
-    var timeMilis = 5000
+
+    var practiceViewModel = PracticeViewModel(Tuning.E)
+    var accuracyCents = 10
+    var secondaryAccuracyCents = 100
+    var timeMilis = 2500
+    var tuning = Tuning.E
 
 }
