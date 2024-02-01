@@ -5,6 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.lifecycle.ViewModel
 import com.lbbento.pitchuptuner.GuitarTuner
 import com.lbbento.pitchuptuner.GuitarTunerListener
 import com.lbbento.pitchuptuner.audio.PitchAudioRecorder
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 
 
-class PracticeViewModel(val tuning: Tuning) {
+class PracticeViewModel(val tuning: Tuning): ViewModel() {
     var levels: ArrayList<Level> = arrayListOf(Level.HALF)
     var currentNote = MutableStateFlow(getRandomNote())
     var currentLevel = MutableStateFlow(getRandomLevel())
@@ -114,7 +115,7 @@ class PracticeViewModel(val tuning: Tuning) {
     }
 
     fun getRandomLevel(): Level {
-        val i: Int = (0..levels.size - 1).random()
+        val i: Int = (0 until levels.size).random()
         return levels[i]
     }
 

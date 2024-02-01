@@ -1,4 +1,4 @@
-package com.radovicdanilo.gbender.presentation.main
+package com.radovicdanilo.gbender.presentation
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -41,7 +41,6 @@ import com.radovicdanilo.gbender.data.model.Level
 import com.radovicdanilo.gbender.data.model.Tuning
 import com.radovicdanilo.gbender.di.AppCore
 import com.radovicdanilo.gbender.domain.PracticeViewModel
-import com.radovicdanilo.gbender.presentation.Screen
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

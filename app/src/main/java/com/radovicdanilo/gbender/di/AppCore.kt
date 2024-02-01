@@ -10,6 +10,7 @@ class AppCore private constructor() {
         val instance: AppCore by lazy {
             AppCore()
         }
+
     }
 
     var practiceViewModel = PracticeViewModel(Tuning.E)

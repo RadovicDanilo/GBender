@@ -1,4 +1,4 @@
-package com.radovicdanilo.gbender.presentation.practice
+package com.radovicdanilo.gbender.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,14 +20,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.radovicdanilo.gbender.di.AppCore
 import com.radovicdanilo.gbender.domain.PracticeViewModel
 
 
 @Composable
-fun PracticeScreen(practiceViewModel: PracticeViewModel) {
+fun PracticeScreen() {
+    val practiceViewModel = viewModel<PracticeViewModel>()
 
     Column(
         modifier = Modifier.fillMaxSize(),
