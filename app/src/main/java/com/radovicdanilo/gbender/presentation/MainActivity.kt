@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = Screen.PracticeScreen.route,
                     ) {
-                        PracticeScreen(AppCore.instance.practiceViewModel)
+                        PracticeScreen()
                     }
                 }
             }

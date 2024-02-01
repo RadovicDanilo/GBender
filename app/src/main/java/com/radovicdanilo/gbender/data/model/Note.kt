@@ -2,8 +2,6 @@ package com.radovicdanilo.gbender.data.model
 
 class Note(var string: Int, var fret: Int) {
 
-
-
     override fun toString(): String {
         val fretSuffix: String
         if (fret == 1) {

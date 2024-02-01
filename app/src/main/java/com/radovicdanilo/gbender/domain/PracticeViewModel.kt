@@ -18,8 +18,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 
 
-class PracticeViewModel(val tuning: Tuning): ViewModel() {
-    var levels: ArrayList<Level> = arrayListOf(Level.HALF)
+class PracticeViewModel(
+    val tuning: Tuning = AppCore.instance.tuning,
+    var levels: ArrayList<Level> = AppCore.instance.levels
+) : ViewModel() {
     var currentNote = MutableStateFlow(getRandomNote())
     var currentLevel = MutableStateFlow(getRandomLevel())
     val currentPitch = MutableStateFlow(440.0f)
@@ -49,33 +51,28 @@ class PracticeViewModel(val tuning: Tuning): ViewModel() {
             )
         )
 
-
         val guitarTunerListener = object : GuitarTunerListener {
 
             override fun onNoteReceived(tunerResult: TunerResult) {
                 val now = System.currentTimeMillis()
-//                if(previousTime != 0.toLong() && previousTime + 50 > now)
-//                    return
 
                 currentPitch.value =
                     (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
-                if (currentPitch.value.toInt() < 20)
-                    return
-
+                if (currentPitch.value.toInt() < 20) return
                 circleColorOn.value = arrayListOf(false, false, false, false, false)
                 active = false
                 when {
-                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.secondaryAccuracyCents)
-                    -> circleColorOn.value[0] = true
+                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.secondaryAccuracyCents) -> circleColorOn.value[0] =
+                        true
 
-                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.accuracyCents)
-                    -> circleColorOn.value[1] = true
+                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.accuracyCents) -> circleColorOn.value[1] =
+                        true
 
-                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.secondaryAccuracyCents)
-                    -> circleColorOn.value[3] = true
+                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.secondaryAccuracyCents) -> circleColorOn.value[3] =
+                        true
 
-                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.accuracyCents)
-                    -> circleColorOn.value[4] = true
+                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.accuracyCents) -> circleColorOn.value[4] =
+                        true
 
                     else -> {
                         circleColorOn.value[2] = true
@@ -114,12 +111,12 @@ class PracticeViewModel(val tuning: Tuning): ViewModel() {
         currentNote.value = getRandomNote()
     }
 
-    fun getRandomLevel(): Level {
+    private fun getRandomLevel(): Level {
         val i: Int = (0 until levels.size).random()
         return levels[i]
     }
 
-    fun getRandomNote(): Note {
+    private fun getRandomNote(): Note {
         val string: Int = (1..3).random()
         val fret: Int = (4..24).random()
         return Note(string, fret)
@@ -139,12 +136,11 @@ class PracticeViewModel(val tuning: Tuning): ViewModel() {
     fun getDesiredNoteFrequencyWithOffset(offsetInCents: Int): Float {
         var steps: Float = (currentNote.value.fret - 2).toFloat()
         if (currentNote.value.string == 1) {
-            steps += 7
+            steps += 9
         }
-        if (currentNote.value.string == 1) {
-            steps += 2
+        if (currentNote.value.string == 2) {
+            steps += 4
         }
-        steps += currentLevel.value.frets()
         steps += offsetInCents.toFloat() / 100
         return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
     }

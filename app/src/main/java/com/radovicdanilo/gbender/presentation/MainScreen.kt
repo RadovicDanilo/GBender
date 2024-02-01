@@ -41,6 +41,7 @@ import com.radovicdanilo.gbender.data.model.Level
 import com.radovicdanilo.gbender.data.model.Tuning
 import com.radovicdanilo.gbender.di.AppCore
 import com.radovicdanilo.gbender.domain.PracticeViewModel
+import com.radovicdanilo.gbender.presentation.Screen
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -102,9 +103,6 @@ fun MainScreen(navController: NavController) {
         Row {
             Button(onClick = {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                    val practiceViewModel = PracticeViewModel(tuning = AppCore.instance.tuning)
-                    practiceViewModel.start()
-                    AppCore.instance.practiceViewModel = practiceViewModel
                     navController.navigate(Screen.PracticeScreen.route)
                 }
             }) {
