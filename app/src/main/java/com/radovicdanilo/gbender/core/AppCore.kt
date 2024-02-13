@@ -14,6 +14,6 @@ class AppCore private constructor() {
     var tuning = Tuning.E
     var accuracyCents = 10
     var secondaryAccuracyCents = 100
-    var timeToHoldNoteMilis = 2500
+    var timeToHoldNoteMilis = 2000
 
 }

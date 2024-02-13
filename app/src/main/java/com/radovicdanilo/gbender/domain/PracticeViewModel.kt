@@ -33,70 +33,38 @@ class PracticeViewModel : ViewModel() {
     var previousTime: Long = 0
     var active = false
 
-    @SuppressLint("MissingPermission")
-    fun start() {
-        if (levels.size > 0)
-            return
+    @SuppressLint("MissingPermission") fun start() {
+        if (levels.size > 0) return
         for (l in Level.values()) {
             if (l.selected.value) levels.add(l)
         }
         noteChange()
-        val audioRecorder = PitchAudioRecorder(
-            AudioRecord(
-                MediaRecorder.AudioSource.DEFAULT,
-                44100,
-                AudioFormat.CHANNEL_IN_DEFAULT,
-                AudioFormat.ENCODING_PCM_16BIT,
-                AudioRecord.getMinBufferSize(
-                    44100,
-                    AudioFormat.CHANNEL_IN_DEFAULT,
-                    AudioFormat.ENCODING_PCM_16BIT
-                )
-            )
-        )
+        val audioRecorder = PitchAudioRecorder(AudioRecord(MediaRecorder.AudioSource.DEFAULT, 44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT, AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT)))
 
         val guitarTunerListener = object : GuitarTunerListener {
 
             override fun onNoteReceived(tunerResult: TunerResult) {
                 val now = System.currentTimeMillis()
-
                 currentPitch.value = (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
-                if (currentPitch.value.toInt() < 20)
-                    return
-                if(now - previousTime < 50)
-                    return
+
+                if (currentPitch.value.toInt() < 100 &&(currentPitch.value.toInt() > 5000 || now - previousTime < 100)) return
+
+
                 circleColorOn.value = arrayListOf(false, false, false, false, false)
                 active = false
-                when {
-                    currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(
-                        tuning,
-                        -AppCore.instance.secondaryAccuracyCents
-                    ) -> circleColorOn.value[0] =
-                        true
-
-                    currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(
-                        tuning,
-                        -AppCore.instance.accuracyCents
-                    ) -> circleColorOn.value[1] =
-                        true
-
-                    currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(
-                        tuning,
-                        AppCore.instance.secondaryAccuracyCents
-                    ) -> circleColorOn.value[3] =
-                        true
-
-                    currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(
-                        tuning,
-                        AppCore.instance.accuracyCents
-                    ) -> circleColorOn.value[4] =
-                        true
-
-                    else -> {
-                        circleColorOn.value[2] = true
-                        active = true
-                    }
+                if (currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(tuning, -AppCore.instance.secondaryAccuracyCents)) {
+                    circleColorOn.value[0] = true
+                } else if (currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(tuning, -AppCore.instance.accuracyCents)) {
+                    circleColorOn.value[1] = true
+                } else if (currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(tuning, AppCore.instance.secondaryAccuracyCents)) {
+                    circleColorOn.value[4] = true
+                } else if (currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(tuning, AppCore.instance.accuracyCents)) {
+                    circleColorOn.value[3] = true
+                } else {
+                    circleColorOn.value[2] = true
+                    active = true
                 }
+
                 if (!active) {
                     previousTime = 0
                     progress.value = 0
@@ -108,8 +76,7 @@ class PracticeViewModel : ViewModel() {
                 progress.value = progress.value + now - previousTime
                 previousTime = now
                 if (progress.value > AppCore.instance.timeToHoldNoteMilis) {
-
-                    val mediaPlayer = MediaPlayer.create(context, R.raw.ping)
+                    val mediaPlayer: MediaPlayer = MediaPlayer.create(context, R.raw.ping)
                     mediaPlayer.start()
                     Thread.sleep(1000)
                     mediaPlayer.release()
@@ -117,7 +84,6 @@ class PracticeViewModel : ViewModel() {
                     previousTime = 0
                     progress.value = 0
                     noteChange()
-
                 }
             }
 
