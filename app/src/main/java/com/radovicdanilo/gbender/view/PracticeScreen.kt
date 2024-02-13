@@ -51,11 +51,6 @@ fun PracticeScreen() {
         }
         Spacer(modifier = Modifier.height(25.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Text(text = "Frequency = " + practiceViewModel.getDesiredNoteFrequency().toString())
-        }
         Spacer(modifier = Modifier.height(25.dp))
         Row(
             horizontalArrangement = Arrangement.Center,

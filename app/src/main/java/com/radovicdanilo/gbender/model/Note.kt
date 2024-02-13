@@ -1,5 +1,7 @@
 package com.radovicdanilo.gbender.model
 
+import kotlin.math.pow
+
 class Note(var string: Int, var fret: Int) {
     override fun toString(): String {
 
@@ -25,5 +27,18 @@ class Note(var string: Int, var fret: Int) {
 
         return "$fret$fretSuffix fret on the $stringName String"
     }
+    fun getDesiredNoteFrequency(tuning: Tuning): Float {
+        var steps: Float = (this.fret - 2).toFloat()
+        if (this.string == 1) {
+            steps += 9
+        }
+        if (this.string == 2) {
+            steps += 4
+        }
+        return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
+    }
 
+    fun getDesiredNoteFrequencyWithOffset(tuning: Tuning, offsetInCents: Int): Float {
+        return getDesiredNoteFrequency(tuning) * 2.0.pow(offsetInCents.toFloat() / 1200.0).toFloat()
+    }
 }

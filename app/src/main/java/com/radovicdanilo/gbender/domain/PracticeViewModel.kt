@@ -18,14 +18,12 @@ import com.radovicdanilo.gbender.model.Level
 import com.radovicdanilo.gbender.model.Note
 import com.radovicdanilo.gbender.model.Tuning
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlin.math.pow
 
 
-class PracticeViewModel(
-) : ViewModel() {
+class PracticeViewModel : ViewModel() {
     var context: Context? = null
-    private val tuning: Tuning = AppCore.instance.tuning
-    private var levels: ArrayList<Level> = arrayListOf()
+    val tuning: Tuning = AppCore.instance.tuning
+    var levels: ArrayList<Level> = arrayListOf()
     var currentNote = MutableStateFlow(Note(2, 15))
     var currentLevel = MutableStateFlow(Level.HALF)
     val currentPitch = MutableStateFlow(440.0f)
@@ -37,13 +35,12 @@ class PracticeViewModel(
 
     @SuppressLint("MissingPermission")
     fun start() {
-        if(levels.size > 0)
+        if (levels.size > 0)
             return
         for (l in Level.values()) {
             if (l.selected.value) levels.add(l)
         }
-        currentNote = MutableStateFlow(getRandomNote())
-        currentLevel = MutableStateFlow(getRandomLevel())
+        noteChange()
         val audioRecorder = PitchAudioRecorder(
             AudioRecord(
                 MediaRecorder.AudioSource.DEFAULT,
@@ -63,22 +60,36 @@ class PracticeViewModel(
             override fun onNoteReceived(tunerResult: TunerResult) {
                 val now = System.currentTimeMillis()
 
-                currentPitch.value =
-                    (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
-                if (currentPitch.value.toInt() < 20) return
+                currentPitch.value = (tunerResult.expectedFrequency + tunerResult.diffFrequency).toFloat()
+                if (currentPitch.value.toInt() < 20)
+                    return
+                if(now - previousTime < 50)
+                    return
                 circleColorOn.value = arrayListOf(false, false, false, false, false)
                 active = false
                 when {
-                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.secondaryAccuracyCents) -> circleColorOn.value[0] =
+                    currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(
+                        tuning,
+                        -AppCore.instance.secondaryAccuracyCents
+                    ) -> circleColorOn.value[0] =
                         true
 
-                    currentPitch.value < getDesiredNoteFrequencyWithOffset(-AppCore.instance.accuracyCents) -> circleColorOn.value[1] =
+                    currentPitch.value < currentNote.value.getDesiredNoteFrequencyWithOffset(
+                        tuning,
+                        -AppCore.instance.accuracyCents
+                    ) -> circleColorOn.value[1] =
                         true
 
-                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.secondaryAccuracyCents) -> circleColorOn.value[3] =
+                    currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(
+                        tuning,
+                        AppCore.instance.secondaryAccuracyCents
+                    ) -> circleColorOn.value[3] =
                         true
 
-                    currentPitch.value > getDesiredNoteFrequencyWithOffset(AppCore.instance.accuracyCents) -> circleColorOn.value[4] =
+                    currentPitch.value > currentNote.value.getDesiredNoteFrequencyWithOffset(
+                        tuning,
+                        AppCore.instance.accuracyCents
+                    ) -> circleColorOn.value[4] =
                         true
 
                     else -> {
@@ -132,23 +143,8 @@ class PracticeViewModel(
 
     private fun getRandomNote(): Note {
         val string: Int = (1..3).random()
-        val fret: Int = (4..24).random()
-        return Note(string, fret)
-    }
-
-    fun getDesiredNoteFrequency(): Float {
-        var steps: Float = (currentNote.value.fret - 2).toFloat()
-        if (currentNote.value.string == 1) {
-            steps += 9
-        }
-        if (currentNote.value.string == 2) {
-            steps += 4
-        }
-        return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
-    }
-
-    fun getDesiredNoteFrequencyWithOffset(offsetInCents: Int): Float {
-        return getDesiredNoteFrequency() * 2.0.pow(offsetInCents.toFloat() / 1200.0).toFloat()
+        val fret: Int = (4..13).random()
+        return Note(string, fret + currentLevel.value.frets())
     }
 
 }
