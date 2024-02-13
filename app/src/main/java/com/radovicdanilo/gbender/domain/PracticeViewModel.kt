@@ -1,8 +1,10 @@
 package com.radovicdanilo.gbender.domain
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -10,20 +12,22 @@ import com.lbbento.pitchuptuner.GuitarTuner
 import com.lbbento.pitchuptuner.GuitarTunerListener
 import com.lbbento.pitchuptuner.audio.PitchAudioRecorder
 import com.lbbento.pitchuptuner.service.TunerResult
-import com.radovicdanilo.gbender.data.model.Level
-import com.radovicdanilo.gbender.data.model.Note
-import com.radovicdanilo.gbender.data.model.Tuning
-import com.radovicdanilo.gbender.di.AppCore
+import com.radovicdanilo.gbender.R
+import com.radovicdanilo.gbender.core.AppCore
+import com.radovicdanilo.gbender.model.Level
+import com.radovicdanilo.gbender.model.Note
+import com.radovicdanilo.gbender.model.Tuning
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 
 
 class PracticeViewModel(
-    val tuning: Tuning = AppCore.instance.tuning,
-    var levels: ArrayList<Level> = AppCore.instance.levels
 ) : ViewModel() {
-    var currentNote = MutableStateFlow(getRandomNote())
-    var currentLevel = MutableStateFlow(getRandomLevel())
+    var context: Context? = null
+    private val tuning: Tuning = AppCore.instance.tuning
+    private var levels: ArrayList<Level> = arrayListOf()
+    var currentNote = MutableStateFlow(Note(2, 15))
+    var currentLevel = MutableStateFlow(Level.HALF)
     val currentPitch = MutableStateFlow(440.0f)
     var circleColorOn = MutableStateFlow(arrayListOf(false, false, false, false, false))
 
@@ -33,12 +37,13 @@ class PracticeViewModel(
 
     @SuppressLint("MissingPermission")
     fun start() {
-        levels = arrayListOf()
-        Level.values().forEach { level ->
-            if (level.selected.value) {
-                levels.add(level)
-            }
+        if(levels.size > 0)
+            return
+        for (l in Level.values()) {
+            if (l.selected.value) levels.add(l)
         }
+        currentNote = MutableStateFlow(getRandomNote())
+        currentLevel = MutableStateFlow(getRandomLevel())
         val audioRecorder = PitchAudioRecorder(
             AudioRecord(
                 MediaRecorder.AudioSource.DEFAULT,
@@ -46,7 +51,9 @@ class PracticeViewModel(
                 AudioFormat.CHANNEL_IN_DEFAULT,
                 AudioFormat.ENCODING_PCM_16BIT,
                 AudioRecord.getMinBufferSize(
-                    44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT
+                    44100,
+                    AudioFormat.CHANNEL_IN_DEFAULT,
+                    AudioFormat.ENCODING_PCM_16BIT
                 )
             )
         )
@@ -89,10 +96,17 @@ class PracticeViewModel(
                 }
                 progress.value = progress.value + now - previousTime
                 previousTime = now
-                if (progress.value > AppCore.instance.timeMilis) {
+                if (progress.value > AppCore.instance.timeToHoldNoteMilis) {
+
+                    val mediaPlayer = MediaPlayer.create(context, R.raw.ping)
+                    mediaPlayer.start()
+                    Thread.sleep(1000)
+                    mediaPlayer.release()
+
                     previousTime = 0
                     progress.value = 0
-                    next()
+                    noteChange()
+
                 }
             }
 
@@ -103,10 +117,10 @@ class PracticeViewModel(
 
         val guitarTuner = GuitarTuner(audioRecorder, guitarTunerListener)
         guitarTuner.start()
-        next()
+        noteChange()
     }
 
-    fun next() {
+    fun noteChange() {
         currentLevel.value = getRandomLevel()
         currentNote.value = getRandomNote()
     }
@@ -134,15 +148,7 @@ class PracticeViewModel(
     }
 
     fun getDesiredNoteFrequencyWithOffset(offsetInCents: Int): Float {
-        var steps: Float = (currentNote.value.fret - 2).toFloat()
-        if (currentNote.value.string == 1) {
-            steps += 9
-        }
-        if (currentNote.value.string == 2) {
-            steps += 4
-        }
-        steps += offsetInCents.toFloat() / 100
-        return tuning.getReference() * 2.0.pow(steps / 12.0).toFloat()
+        return getDesiredNoteFrequency() * 2.0.pow(offsetInCents.toFloat() / 1200.0).toFloat()
     }
 
 }

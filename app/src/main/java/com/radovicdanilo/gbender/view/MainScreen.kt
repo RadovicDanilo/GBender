@@ -1,4 +1,4 @@
-package com.radovicdanilo.gbender.presentation
+package com.radovicdanilo.gbender.view
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -37,11 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import com.radovicdanilo.gbender.data.model.Level
-import com.radovicdanilo.gbender.data.model.Tuning
-import com.radovicdanilo.gbender.di.AppCore
-import com.radovicdanilo.gbender.domain.PracticeViewModel
-import com.radovicdanilo.gbender.presentation.Screen
+import com.radovicdanilo.gbender.core.AppCore
+import com.radovicdanilo.gbender.model.Level
+import com.radovicdanilo.gbender.model.Tuning
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -118,14 +116,12 @@ fun TuningDropdownMenu() {
     var isExpanded by remember {
         mutableStateOf(false)
     }
-    var tuning by remember {
-        mutableStateOf(Tuning.E)
-    }
+
     ExposedDropdownMenuBox(expanded = isExpanded, onExpandedChange = { newValue ->
         isExpanded = newValue
     }) {
         TextField(
-            value = tuning.toString(),
+            value = AppCore.instance.tuning.toString(),
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
@@ -140,40 +136,17 @@ fun TuningDropdownMenu() {
         ExposedDropdownMenu(expanded = isExpanded, onDismissRequest = {
             isExpanded = false
         }) {
-            DropdownMenuItem(text = {
-                Text(text = "E")
-            }, onClick = {
-                tuning = Tuning.E
-                isExpanded = false
-            })
-            DropdownMenuItem(text = {
-                Text(text = "Eb")
-            }, onClick = {
-                tuning = Tuning.Eb
-                isExpanded = false
-            })
-            DropdownMenuItem(text = {
-                Text(text = "D")
-            }, onClick = {
-                tuning = Tuning.D
-                isExpanded = false
-            })
-            DropdownMenuItem(text = {
-                Text(text = "Db")
-            }, onClick = {
-                tuning = Tuning.Db
-                isExpanded = false
-            })
-            DropdownMenuItem(text = {
-                Text(text = "C")
-            }, onClick = {
-                tuning = Tuning.C
-                isExpanded = false
-            })
+            for(t in Tuning.values()){
+                DropdownMenuItem(text = {
+                    Text(text = t.toString())
+                }, onClick = {
+                    AppCore.instance.tuning = t
+                    isExpanded = false
+                })
+            }
         }
     }
 }
-
 @Composable
 fun levelCard(level: Level) {
     var backgroundColor = White

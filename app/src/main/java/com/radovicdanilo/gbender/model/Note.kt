@@ -1,8 +1,8 @@
-package com.radovicdanilo.gbender.data.model
+package com.radovicdanilo.gbender.model
 
 class Note(var string: Int, var fret: Int) {
-
     override fun toString(): String {
+
         val fretSuffix: String
         if (fret == 1) {
             fretSuffix = "st"
@@ -25,4 +25,5 @@ class Note(var string: Int, var fret: Int) {
 
         return "$fret$fretSuffix fret on the $stringName String"
     }
+
 }

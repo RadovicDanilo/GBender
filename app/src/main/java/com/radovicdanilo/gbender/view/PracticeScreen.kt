@@ -1,4 +1,4 @@
-package com.radovicdanilo.gbender.presentation
+package com.radovicdanilo.gbender.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,20 +16,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.radovicdanilo.gbender.di.AppCore
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.radovicdanilo.gbender.core.AppCore
 import com.radovicdanilo.gbender.domain.PracticeViewModel
 
 @Composable
 fun PracticeScreen() {
     val practiceViewModel = viewModel<PracticeViewModel>()
-
+    practiceViewModel.context = LocalContext.current
+    practiceViewModel.start()
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -74,7 +76,7 @@ fun PracticeScreen() {
         Row(horizontalArrangement = Arrangement.Start) {
             Box(
                 Modifier
-                    .fillMaxWidth(practiceViewModel.progress.collectAsState().value.toFloat() / AppCore.instance.timeMilis.toFloat())
+                    .fillMaxWidth(practiceViewModel.progress.collectAsState().value.toFloat() / AppCore.instance.timeToHoldNoteMilis.toFloat())
                     .height(30.dp)
                     .background(Color.Red)
                 ) {
@@ -120,7 +122,7 @@ fun Skip(practiceViewModel: PracticeViewModel) {
         horizontalArrangement = Arrangement.End
     ) {
         Button(onClick = {
-            practiceViewModel.next()
+            practiceViewModel.noteChange()
         })
         {
             Text(text = "Skip")

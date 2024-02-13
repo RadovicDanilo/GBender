@@ -1,4 +1,4 @@
-package com.radovicdanilo.gbender.data.model
+package com.radovicdanilo.gbender.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 

@@ -1,7 +1,7 @@
-package com.radovicdanilo.gbender.di
+package com.radovicdanilo.gbender.core
 
-import com.radovicdanilo.gbender.data.model.Level
-import com.radovicdanilo.gbender.data.model.Tuning
+import com.radovicdanilo.gbender.model.Level
+import com.radovicdanilo.gbender.model.Tuning
 
 
 class AppCore private constructor() {
@@ -10,10 +10,10 @@ class AppCore private constructor() {
             AppCore()
         }
     }
-    val levels: ArrayList<Level> = arrayListOf(Level.HALF, Level.WHOLE)
+    val useSharps = true
     var tuning = Tuning.E
     var accuracyCents = 10
     var secondaryAccuracyCents = 100
-    var timeMilis = 2500
+    var timeToHoldNoteMilis = 2500
 
 }
